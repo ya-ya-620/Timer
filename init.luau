@@ -1,10 +1,8 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local Timer = {}
 Timer.__index = Timer
 
 export type Timer = {
-	new: (number) -> Timer,
+	new: (countTime: number, isCountDown: boolean) -> Timer,
 	Destroy: (Timer) -> (),
 	Start: (Timer) -> (),
 	StartTime: number,
@@ -12,7 +10,7 @@ export type Timer = {
 	TimerEnded: RBXScriptSignal,
 }
 
-function Timer.new(countTime: number)
+function Timer.new(countTime: number, isCountDown: boolean?)
 	local self = setmetatable({}, Timer)
 
 	self._timerEnded = Instance.new("BindableEvent")
@@ -20,34 +18,32 @@ function Timer.new(countTime: number)
 	self.TimerEnded = self._timerEnded.Event
 	self.TimeChanged = self._timeChanged.Event
 	self.COUNT_TIME = countTime
-	self.CountDown = true
+	self.CountDown = if isCountDown ~= nil then isCountDown else true
 	self.elapsed = 0
 	return self
 end
 
-function Timer:Start()
-	self.StartTime = os.time()
-	self.timerThread = coroutine.wrap(function()
-		local elapsed = 0
-		self:_changed(self.elapsed)
+function Timer:Start(startTime: number?)
+	if self._isRunning then
+		warn("timer already running")
+		return
+	end
+	self._isRunning = true
+	self.StartTime = startTime or os.time()
+	self.timerThread = task.spawn(function()
 		while self.COUNT_TIME >= self.elapsed do
-			local t = task.wait()
-			elapsed += t
-			self.elapsed += t
-			if elapsed >= 1 then
-				elapsed = 0
-				self:_changed(self.elapsed)
-			end
+			self:_changed(self.elapsed)
+			self.elapsed += 1
+			task.wait(1)
 		end
 		self._timerEnded:Fire()
-	end)()
+		self.timerThread = nil
+	end)
 end
 
-function Timer:GetCurrent()
-	if self.CountDown == true then
-		return self.COUNT_TIME - self.elapsed
-	elseif self.CountDown == false then
-		return self.elapsed
+function Timer:Stop()
+	if self.timerThread then
+		task.cancel(self.timerThread)
 	end
 end
 
@@ -60,11 +56,12 @@ function Timer:_changed(currentTime: number)
 end
 
 function Timer:Destroy()
+	if self.timerThread ~= nil then
+		task.cancel(self.timerThread)
+	end
 	self._timerEnded:Destroy()
 	self._timeChanged:Destroy()
-	if self.timerThread ~= nil then
-		coroutine.close(self.timerThread)
-	end
+	table.clear(self)
 end
 
 return Timer
