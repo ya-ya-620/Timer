@@ -1,0 +1,9 @@
+[package]
+name = "zac134/timer"
+version = "0.0.2"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+license = "MIT"
+exclude = ["README.md"]
+
+[dependencies]

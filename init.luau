@@ -3,6 +3,7 @@ Timer.__index = Timer
 
 export type Timer = {
 	new: (countTime: number, isCountDown: boolean) -> Timer,
+	elapsed: number,
 	Destroy: (Timer) -> (),
 	Start: (Timer) -> (),
 	StartTime: number,
@@ -31,7 +32,7 @@ function Timer:Start(startTime: number?)
 	self._isRunning = true
 	self.StartTime = startTime or os.time()
 	self.timerThread = task.spawn(function()
-		while self.COUNT_TIME >= self.elapsed do
+		while self.COUNT_TIME > self.elapsed do
 			self:_changed(self.elapsed)
 			self.elapsed += 1
 			task.wait(1)
