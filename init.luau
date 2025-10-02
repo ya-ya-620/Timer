@@ -9,6 +9,7 @@ export type Timer = {
 	StartTime: number,
 	TimeChanged: RBXScriptSignal,
 	TimerEnded: RBXScriptSignal,
+	GetElapsed: (Timer) -> number,
 }
 
 function Timer.new(countTime: number, isCountDown: boolean?)
@@ -22,6 +23,10 @@ function Timer.new(countTime: number, isCountDown: boolean?)
 	self.CountDown = if isCountDown ~= nil then isCountDown else true
 	self.elapsed = 0
 	return self
+end
+
+function Timer:GetElapsed()
+	return self.elapsed
 end
 
 function Timer:Start(startTime: number?)
